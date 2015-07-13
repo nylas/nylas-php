@@ -52,7 +52,7 @@ class Nylas {
 
         $mapped = array();
         foreach ($data as $i) {
-            $mapped[] = $klass->create($this, $namespace, $i);
+            $mapped[] = clone $klass->create($this, $namespace, $i);
         }
         return $mapped;
     }
