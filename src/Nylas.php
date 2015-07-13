@@ -52,7 +52,7 @@ class Nylas {
 
         $mapped = array();
         foreach ($data as $i) {
-            $mapped[] = clone $klass->create($this, $namespace, $i);
+            $mapped[] = clone $klass->_createObject($this, $namespace, $i);
         }
         return $mapped;
     }
@@ -64,7 +64,7 @@ class Nylas {
             unset($filters['extra']);
         }
         $response = $this->getResourceRaw($namespace, $klass, $id, $filters);
-        return $klass->create($this, $namespace, $response);
+        return $klass->_createObject($this, $namespace, $response);
     }
 
     public function getResourceRaw($namespace, $klass, $id, $filters) {
@@ -181,7 +181,7 @@ class NylasAPIObject {
         return $this->data;
     }
 
-    public function create($klass, $namespace, $objects) {
+    public function _createObject($klass, $namespace, $objects) {
         $this->data = $objects;
         $this->klass = $klass;
         return $this;
