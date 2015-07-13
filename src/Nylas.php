@@ -102,21 +102,17 @@ class NylasModelCollection {
 
     public function items() {
         $offset = 0;
-
         while (True) {
             $items = $this->_getModelCollection($offset, $this->chunkSize);
             if(!$items) {
                 break;
             }
-
             foreach ($items as $item) {
                 yield $item;
             }
-
             if (count($items) < $this->chunkSize) {
                 break;
             }
-
             $offset += count($items);
         }
     }
@@ -133,6 +129,18 @@ class NylasModelCollection {
         return $this->_range($this->filter['offset'], $limit);
     }
 
+    public function where($filter, $filters=array()) {
+        $this->filter = array_merge($this->filter, $filter);
+        $this->filter['offset'] = 0;
+        $collection = clone $this;
+        $collection->filter = $this->filter;
+        return $collection;
+    }
+
+    public function find($id) {
+        return $this->_getModel($id);
+    }
+
     private function _range($offset, $limit) {
         $result = array();
         while (count($result) < $limit) {
@@ -145,18 +153,6 @@ class NylasModelCollection {
             }
         }
         return $result;
-    }
-
-    public function where($filter, $filters=array()) {
-        $this->filter = array_merge($this->filter, $filter);
-        $this->filter['offset'] = 0;
-        $collection = clone $this;
-        $collection->filter = $this->filter;
-        return $collection;
-    }
-
-    public function find($id) {
-        return $this->_getModel($id);
     }
 
     private function _getModel($id) {
