@@ -190,6 +190,14 @@ class NylasAPIObject {
         $this->klass = $klass;
         return $this;
     }
+
+    public function __get($key) {
+        if(array_key_exists($key, $this->data)) {
+            return $this->data[$key];
+        }
+        return NULL;
+    }
+
 }
 
 
@@ -208,5 +216,5 @@ $namespaces = $client->namespaces()->first();
 // $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->drafts()->first();
 // $tags = $namespaces->tags()->all(5);
 $events = $namespaces->calendars()->first()->events()->first();
-print_r($events->json());
+print_r($events->title);
 
