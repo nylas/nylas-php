@@ -17,9 +17,9 @@ class Nylas {
 
     protected $apiServer = 'https://api.nylas.com';
     protected $authServer = 'https://www.nylas.com';
-    protected $apiRoot = 'n';
     protected $apiClient;
     protected $apiToken;
+    public $apiRoot = 'n';
 
     public function __construct($appID=NULL, $appSecret=NULL, $token=NULL) {
         $this->appID     = $appID;
@@ -147,7 +147,7 @@ class NylasModelCollection {
         return $result;
     }
 
-    public function where($filter, $filters) {
+    public function where($filter, $filters=array()) {
         $this->filter = array_merge($this->filter, $filter);
         $this->filter['offset'] = 0;
         $collection = clone $this;
@@ -175,14 +175,10 @@ class NylasModelCollection {
 
 class NylasAPIObject {
 
-    protected $apiRoot;
+    public $apiRoot;
 
-    public function __construct($klass, $api, $namespace) {
-        $this->id = NULL;
-        $this->klass = $klass;
-        $this->namespace = $namespace;
+    public function __construct() {
         $this->apiRoot = 'n';
-        $this->data = array();
     }
 
     public function json() {
