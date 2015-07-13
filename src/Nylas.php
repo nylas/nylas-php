@@ -195,11 +195,18 @@ class NylasAPIObject {
 
 $client = new Nylas(CLIENT, SECRET, TOKEN);
 // print_r($client->messages(NS)->all(2));
-// print_r($client->messages(NS)->where(array("from"=>"makrand@wearhacks.com"), array())->all(1));
+// print_r($client->messages(NS)->where(array("from"=>"hi@kartikt.com"), array())->all(1));
 // print_r($client->messages(NS)->find('5s51vn0rgyxmqy3a1h7vh90bj'));
 // print_r($client->namespaces()->first()->messages()->all(2));
-foreach($client->namespaces()->first()->messages()->all(2) as $i) {
-    print_r($i->getId());
-}
-// print_r($client->namespaces()->items());
+// foreach($client->namespaces()->first()->messages()->all(2) as $i) {
+//     print_r($i->getId());
+// }
+$namespaces = $client->namespaces()->first();
+// $messages = $namespaces->messages()->where(array("from"=>"hi@kartikt.com"))->all();
+// $threads = $namespaces->threads()->where(array("thread_id"=>"7jv3ixkp5j1llrwq2ne37m00x"))->first();
+// $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->messages()->first()->json();
+// $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->drafts()->first();
+// $tags = $namespaces->tags()->all(5);
+$events = $namespaces->calendars()->first()->events()->first();
+print_r($events->json());
 
