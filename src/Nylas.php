@@ -49,7 +49,6 @@ class Nylas {
         return new NylasModelCollection($msgObj, $this, NS, array());
     }
 
-
     public function getData($namespace, $klass, $filter) {
         $suffix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
         $url = $this->apiServer.$suffix.'/'.$klass->collectionName;
@@ -120,6 +119,14 @@ class NylasModelCollection {
             }
         }
         return $result;
+    }
+
+    public function where($filter, $filters) {
+        $this->filter = array_merge($this->filter, $filter);
+        $this->filter['offset'] = 0;
+        $collection = clone $this;
+        $collection->filter = $this->filter;
+        return $collection;
     }
 
     private function _getModelCollection($offset, $limit) {
