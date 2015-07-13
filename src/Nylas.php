@@ -17,9 +17,9 @@ class Nylas {
 
     protected $apiServer = 'https://api.nylas.com';
     protected $authServer = 'https://www.nylas.com';
+    protected $apiRoot = 'n';
     protected $apiClient;
     protected $apiToken;
-    protected $apiRoot = 'n';
 
     public function __construct($appID=NULL, $appSecret=NULL, $token=NULL) {
         $this->appID     = $appID;
@@ -39,15 +39,8 @@ class Nylas {
     }
 
     public function namespaces() {
-        // needs to be a collection
-    }
-
-    public function messages($account) {
-        $endpoint = '/n/'.$account.'/messages?limit=1';
-        $data = $this->createApiClient()->get($endpoint, $this->createHeaders());
-        $msgObj = new Models\Message($this, NS);
-        // dont use constant here
-        return new NylasModelCollection($msgObj, $this, NS, array());
+        $nsObj = new Models\Namespaces($this, NULL);
+        return new NylasModelCollection($nsObj, $this, NULL);
     }
 
     // filter should be filters
@@ -56,7 +49,12 @@ class Nylas {
         $url = $this->apiServer.$suffix.'/'.$klass->collectionName;
         $url = $url.'?'.http_build_query($filter);
         $data = $this->apiClient->get($url, $this->createHeaders())->json();
-        return $data; // map this to models
+
+        $mapped = array();
+        foreach ($data as $i) {
+            $mapped[] = $klass->create($this, $namespace, $i);
+        }
+        return $mapped;
     }
 
     public function getResource($namespace, $klass, $id, $filters) {
@@ -83,20 +81,6 @@ class Nylas {
         return $data; // map this to models
     }
 
-    // public function create($klass, $api, $namespace, $objects) {
-    //     // return $this->klass->create($this->api, $this->namespace, $params);
-    //     $obj = $klass($api, $namespace);
-    //     $obj['klass'] = $klass;
-    //     foreach($klass->attrs as $attr) {
-    //         if(array_key_exists($attr, $objects)) {
-    //             $obj[$attr] = $objects[$attr];
-    //         }
-    //     }
-    //     if(!array_key_exists('id', $objects)) {
-    //         $obj['id'] = NULL;
-    //     }
-    //     return $obj;
-    // }
 }
 
 
@@ -104,11 +88,12 @@ class NylasModelCollection {
 
     private $chunkSize = 50;
 
-    public function __construct($klass, $api, $namespace=NULL, $filter=NULL) {
+    public function __construct($klass, $api, $namespace=NULL, $filter=array(), $offset=0, $filters=array()) {
         $this->klass = $klass;
         $this->api = $api;
         $this->namespace = $namespace;
         $this->filter = $filter;
+        $this->filters = $filters;
 
         if(!array_key_exists('offset', $filter)) {
             $this->filter['offset'] = 0;
@@ -190,29 +175,24 @@ class NylasModelCollection {
 
 class NylasAPIObject {
 
-    private $apiRoot;
+    protected $apiRoot;
 
     public function __construct($klass, $api, $namespace) {
         $this->id = NULL;
         $this->klass = $klass;
         $this->namespace = $namespace;
         $this->apiRoot = 'n';
+        $this->data = array();
+    }
+
+    public function json() {
+        return $this->data;
     }
 
     public function create($klass, $namespace, $objects) {
-        // return $this->klass->create($this->api, $this->namespace, $params);
-        print_r(array($klass, $namespace, $objects));return;
-        $obj = $klass($api, $namespace);
-        $obj['klass'] = $klass;
-        foreach($klass->attrs as $attr) {
-            if(array_key_exists($attr, $objects)) {
-                $obj[$attr] = $objects[$attr];
-            }
-        }
-        if(!array_key_exists('id', $objects)) {
-            $obj['id'] = NULL;
-        }
-        return $obj;
+        $this->data = $objects;
+        $this->klass = $klass;
+        return $this;
     }
 }
 
@@ -220,4 +200,10 @@ class NylasAPIObject {
 $client = new Nylas(CLIENT, SECRET, TOKEN);
 // print_r($client->messages(NS)->all(2));
 // print_r($client->messages(NS)->where(array("from"=>"makrand@wearhacks.com"), array())->all(1));
-print_r($client->messages(NS)->find('5s51vn0rgyxmqy3a1h7vh90bj'));
+// print_r($client->messages(NS)->find('5s51vn0rgyxmqy3a1h7vh90bj'));
+// print_r($client->namespaces()->first()->messages()->all(2));
+foreach($client->namespaces()->first()->messages()->all(2) as $i) {
+    print_r($i->getId());
+}
+// print_r($client->namespaces()->items());
+
