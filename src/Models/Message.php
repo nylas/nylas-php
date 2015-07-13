@@ -2,14 +2,17 @@
 
 namespace Nylas\Models;
 
-use Nylas\Nylas;
+use Nylas\NylasAPIObject;
 
 
-class Message extends Nylas {
+class Message extends NylasAPIObject {
 
-    protected $collectionName = 'messages';
+    public $collectionName = 'messages';
 
-    public function __construct() {
+    public function __construct($api, $namespace) {
+        parent::__construct($this, $api, $namespace);
+        $this->attr = [];
+        $this->apiRoot =  'n';
     }
 
 }
