@@ -28,10 +28,14 @@ class Nylas {
         $this->apiClient = $this->createApiClient();
     }
 
-    protected function createHeaders() {
+    protected function createHeaders($json=False) {
         $token = 'Basic '.base64_encode($this->apiToken.':');
-        return ['headers' => ['Authorization' => $token,
-                              'X-Nylas-API-Wrapper' => 'php']];
+        $headers = array('headers' => ['Authorization' => $token,
+                                       'X-Nylas-API-Wrapper' => 'php']);
+        if($json) {
+            $headers['headers']['Content-Type'] = 'application/json';
+        }
+        return $headers;
     }
 
     private function createApiClient() {
@@ -79,6 +83,35 @@ class Nylas {
         $url = $url.'?'.http_build_query($filters);
         $data = $this->apiClient->get($url, $this->createHeaders())->json();
         return $data; // map this to models
+    }
+
+    public function _createResource($namespace, $klass, $data) {
+        $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
+        $url = $this->apiServer.$prefix.'/'.$klass->collectionName;
+
+        if($klass->collectionName == 'files') {
+            // TODO: handle file uploads
+        } else {
+            $payload = $this->createHeaders(true);
+            $payload['json'] = $data;
+            print_r(array($url, $payload));
+            $response = $this->apiClient->post($url, $payload)->json();
+            return $klass->_createObject($this, $namespace, $response);
+        }
+    }
+
+    public function _updateResource($namespace, $klass, $id, $data) {
+        $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
+        $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id;
+
+        if($klass->collectionName == 'files') {
+            // TODO: handle file uploads
+        } else {
+            $payload = $this->createHeaders(true);
+            $payload['json'] = $data;
+            $response = $this->apiClient->put($url, $payload)->json();
+            return $klass->_createObject($this, $namespace, $response);
+        }
     }
 
 }
@@ -139,6 +172,10 @@ class NylasModelCollection {
 
     public function find($id) {
         return $this->_getModel($id);
+    }
+
+    public function create($data) {
+        return $this->klass->create($data, $this);
     }
 
     private function _range($offset, $limit) {
@@ -211,6 +248,10 @@ $namespaces = $client->namespaces()->first();
 // $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->messages()->first()->json();
 // $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->drafts()->first();
 // $tags = $namespaces->tags()->all(5);
-$events = $namespaces->calendars()->first()->events()->first();
-print_r($events->title);
+// $events = $namespaces->calendars()->first()->events()->find('77y2pvpal972es4ewoevs2fb2');
+// $events = $namespaces->messages()->find('5s51vn0rgyxmqy3a1h7vh90bj');
+$drafts = $namespaces->drafts();
+$person = new \Nylas\Models\Person('Kartik Talwar', 'hi@kartikt.com');
+$draft = $drafts->create(array("to" => array($person), "body" => "test<br>message", "subject"=> "Nylas!"));
+print_r($draft->send());
 

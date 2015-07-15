@@ -8,6 +8,7 @@ use Nylas\Models\Tag;
 use Nylas\Models\File;
 use Nylas\Models\Contact;
 use Nylas\Models\Calendar;
+use Nylas\Models\Draft;
 use Nylas\Models\Event;
 
 use Nylas\NylasAPIObject;
@@ -33,6 +34,13 @@ class Namespaces extends NylasAPIObject {
         $this->namespace = $this->data['namespace_id'];
         $namespace = $this->namespace;
         $msgObj = new Thread($this, $namespace);
+        return new NylasModelCollection($msgObj, $this->klass, $namespace, array(), 0, array());
+    }
+
+    public function drafts() {
+        $this->namespace = $this->data['namespace_id'];
+        $namespace = $this->namespace;
+        $msgObj = new Draft($this, $namespace);
         return new NylasModelCollection($msgObj, $this->klass, $namespace, array(), 0, array());
     }
 
