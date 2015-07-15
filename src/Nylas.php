@@ -244,14 +244,14 @@ $client = new Nylas(CLIENT, SECRET, TOKEN);
 // }
 $namespaces = $client->namespaces()->first();
 // $messages = $namespaces->messages()->where(array("from"=>"hi@kartikt.com"))->all();
-// $threads = $namespaces->threads()->where(array("thread_id"=>"7jv3ixkp5j1llrwq2ne37m00x"))->first();
 // $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->messages()->first()->json();
 // $drafts = $namespaces->threads()->where(array("from"=>"hi@kartikt.com"))->first()->drafts()->first();
 // $tags = $namespaces->tags()->all(5);
 // $events = $namespaces->calendars()->first()->events()->find('77y2pvpal972es4ewoevs2fb2');
 // $events = $namespaces->messages()->find('5s51vn0rgyxmqy3a1h7vh90bj');
-$drafts = $namespaces->drafts();
-$person = new \Nylas\Models\Person('Kartik Talwar', 'hi@kartikt.com');
-$draft = $drafts->create(array("to" => array($person), "body" => "test<br>message", "subject"=> "Nylas!"));
-print_r($draft->send());
+// $drafts = $namespaces->drafts();
+// $person = new \Nylas\Models\Person('Kartik Talwar', 'hi@kartikt.com');
+// $draft = $drafts->create(array("to" => array($person), "body" => "test<br>message", "subject"=> "Nylas!"));
+$threads = $namespaces->threads()->where(array("thread_id"=>"7jv3ixkp5j1llrwq2ne37m00x"))->first();
+print_r($threads->star());
 
