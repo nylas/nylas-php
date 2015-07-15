@@ -28,13 +28,10 @@ class Nylas {
         $this->apiClient = $this->createApiClient();
     }
 
-    protected function createHeaders($json=False) {
+    protected function createHeaders() {
         $token = 'Basic '.base64_encode($this->apiToken.':');
         $headers = array('headers' => ['Authorization' => $token,
                                        'X-Nylas-API-Wrapper' => 'php']);
-        if($json) {
-            $headers['headers']['Content-Type'] = 'application/json';
-        }
         return $headers;
     }
 
@@ -89,15 +86,17 @@ class Nylas {
         $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
         $url = $this->apiServer.$prefix.'/'.$klass->collectionName;
 
+        $payload = $this->createHeaders();
         if($klass->collectionName == 'files') {
-            // TODO: handle file uploads
+            $payload['headers']['Content-Type'] = 'multipart/form-data';
+            $payload['body'] = $data;
         } else {
-            $payload = $this->createHeaders(true);
             $payload['json'] = $data;
-            print_r(array($url, $payload));
-            $response = $this->apiClient->post($url, $payload)->json();
-            return $klass->_createObject($this, $namespace, $response);
+            $payload['headers']['Content-Type'] = 'application/json';
         }
+
+        $response = $this->apiClient->post($url, $payload)->json();
+        return $klass->_createObject($this, $namespace, $response);
     }
 
     public function _updateResource($namespace, $klass, $id, $data) {
@@ -105,9 +104,10 @@ class Nylas {
         $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id;
 
         if($klass->collectionName == 'files') {
-            // TODO: handle file uploads
+            $payload['headers']['Content-Type'] = 'multipart/form-data';
+            $payload['body'] = $data;
         } else {
-            $payload = $this->createHeaders(true);
+            $payload = $this->createHeaders();
             $payload['json'] = $data;
             $response = $this->apiClient->put($url, $payload)->json();
             return $klass->_createObject($this, $namespace, $response);
@@ -252,6 +252,7 @@ $namespaces = $client->namespaces()->first();
 // $drafts = $namespaces->drafts();
 // $person = new \Nylas\Models\Person('Kartik Talwar', 'hi@kartikt.com');
 // $draft = $drafts->create(array("to" => array($person), "body" => "test<br>message", "subject"=> "Nylas!"));
-$threads = $namespaces->threads()->where(array("thread_id"=>"7jv3ixkp5j1llrwq2ne37m00x"))->first();
-print_r($threads->star());
+// $threads = $namespaces->threads()->where(array("thread_id"=>"7jv3ixkp5j1llrwq2ne37m00x"))->first();
+$files = $namespaces->files();
+print_r($files->create('test.txt'));
 
