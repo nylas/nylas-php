@@ -27,7 +27,28 @@ In practice, the Nylas REST API client simplifies this down to two steps.
 
 ## Auth
 
-TODO
+**index.php**
+
+```php
+$client = new Nylas(CLIENT, SECRET);
+$redirect_url = 'http://localhost:8080/login_callback.php';
+$get_auth_url = $client->createAuthURL($redirect_url);
+
+// redirect to Nylas auth server
+header("Location: ".$get_auth_url);
+```
+
+**login_callback.php**
+
+```php
+$access_code = $_GET['code'];
+$client = new Nylas(CLIENT, SECRET);
+$get_token = $client->getAuthToken($access_code);
+
+// save token in session
+$_SESSION['access_token'] = $get_token;
+```
+
 
 ## Fetching Namespaces
 

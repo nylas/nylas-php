@@ -10,7 +10,6 @@ use GuzzleHttp\Client as GuzzleClient;
 class Nylas {
 
     protected $apiServer = 'https://api.nylas.com';
-    protected $authServer = 'https://www.nylas.com';
     protected $apiClient;
     protected $apiToken;
     public $apiRoot = 'n';
@@ -35,6 +34,38 @@ class Nylas {
 
     private function createApiClient() {
         return new GuzzleClient(['base_url' => $this->apiServer]);
+    }
+
+    public function createAuthURL($redirect_uri, $login_hint=NULL) {
+        $args = array("client_id" => $this->appID,
+                      "redirect_uri" => $redirect_uri,
+                      "response_type" => "code",
+                      "scope" => "email",
+                      "login_hint" => $login_hint,
+                      "state" => $this->generateId());
+
+        return $this->apiServer.'/oauth/authorize?'.http_build_query($args);
+    }
+
+    public function getAuthToken($code) {
+        $args = array("client_id" => $this->appID,
+                      "client_secret" => $this->appSecret,
+                      "grant_type" => "authorization_code",
+                      "code" => $code);
+
+        $url = $this->apiServer.'/oauth/token';
+        $payload = array();
+        $payload['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+        $payload['headers']['Accept'] = 'text/plain';
+        $payload['body'] = $args;
+
+        $response = $this->apiClient->post($url, $payload)->json();
+
+        if(array_key_exists('access_token', $response)) {
+            $this->apiToken = $response['access_token'];
+        }
+
+        return $this->apiToken;
     }
 
     public function namespaces() {
@@ -111,6 +142,20 @@ class Nylas {
             return $klass->_createObject($this, $namespace, $response);
         }
     }
+
+    private function generateId() {
+        // Generates unique UUID
+        return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0x0fff) | 0x4000,
+            mt_rand(0, 0x3fff) | 0x8000,
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff),
+            mt_rand(0, 0xffff)
+        );
+}
 
 }
 
