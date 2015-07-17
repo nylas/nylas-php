@@ -57,7 +57,7 @@ foreach($two_threads as $thread) {
     echo $thread->id;
 }
 
-// List all threads with ben@nylas.com'
+// List all threads with 'ben@nylas.com'
 $search_criteria = array("any_email" => "ben@nylas.com");
 $get_threads = $namespace->threads()->where($search_criteria)->items()
 foreach($get_threads as $thread) {
@@ -98,8 +98,8 @@ $thread->unstar();
 // Add or remove arbitrary tags
 $to_add = array('cfa1233ef123acd12');
 $to_remove = array('inbox');
-$thread.addTags($to_add);
-$thread.removeTags($to_remove);
+$thread->addTags($to_add);
+$thread->removeTags($to_remove);
 
 // Listing messages
 foreach($thread->messages()->items() as $message) {
