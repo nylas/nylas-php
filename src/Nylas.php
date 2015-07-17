@@ -15,11 +15,15 @@ class Nylas {
     protected $apiToken;
     public $apiRoot = 'n';
 
-    public function __construct($appID, $appSecret, $token=NULL) {
+    public function __construct($appID, $appSecret, $token=NULL, $apiServer=NULL) {
         $this->appID     = $appID;
         $this->appSecret = $appSecret;
         $this->apiToken  = $token;
         $this->apiClient = $this->createApiClient();
+
+        if($apiServer) {
+            $this->apiServer = $apiServer;
+        }
     }
 
     protected function createHeaders() {
@@ -85,8 +89,8 @@ class Nylas {
             $payload['headers']['Content-Type'] = 'multipart/form-data';
             $payload['body'] = $data;
         } else {
-            $payload['json'] = $data;
             $payload['headers']['Content-Type'] = 'application/json';
+            $payload['json'] = $data;
         }
 
         $response = $this->apiClient->post($url, $payload)->json();
