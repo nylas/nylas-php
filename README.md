@@ -195,7 +195,7 @@ $remove = $namespace->events()->find($event->id)->delete();
 
 ## Open-Source Sync Engine
 
-The [Nylas Sync Engine](http://github.com/nylas/sync-engine) is open-source, and you can also use the Python library with the open-source API. Since the open-source API provides no authentication or security, connecting to it is simple. When you instantiate the Nylas object, provide null for the App ID, App Secret, and API Token, and pass the fully-qualified address of your copy of the sync engine:
+The [Nylas Sync Engine](http://github.com/nylas/sync-engine) is open-source, and you can also use the PHP library with the open-source API. Since the open-source API provides no authentication or security, connecting to it is simple. When you instantiate the Nylas object, provide null for the App ID, App Secret, and API Token, and pass the fully-qualified address of your copy of the sync engine:
 
 ```php
 $client = new Nylas(CLIENT, SECRET, TOKEN, 'http://localhost:5555/');
