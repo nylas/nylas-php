@@ -20,7 +20,20 @@ class File extends NylasAPIObject {
                          "filename" => basename($file_name),
                          "contents" => fopen($file_name, 'r'));
         $upload = $this->api->klass->_createResource($this->namespace, $this, $payload);
-        return (object) $upload->data[0];
+        $data = $upload->data[0];
+        $this->data = $data;
+        return $this;
+    }
+
+    public function download() {
+        $resource = $this->klass->getResourceData($this->namespace, $this, $this->data['id'], array('extra' => 'download'));
+
+        $data = '';
+        while (!$resource->eof()) {
+            $data .= $resource->read(1024);
+        }
+
+        return $data;
     }
 
 }

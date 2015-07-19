@@ -108,7 +108,21 @@ class Nylas {
         $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id.$postfix;
         $url = $url.'?'.http_build_query($filters);
         $data = $this->apiClient->get($url, $this->createHeaders())->json();
-        return $data; // map this to models
+        return $data;
+    }
+
+    public function getResourceData($namespace, $klass, $id, $filters) {
+        $extra = '';
+        if(array_key_exists('extra', $filters)) {
+            $extra = $filters['extra'];
+            unset($filters['extra']);
+        }
+        $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
+        $postfix = ($extra) ? '/'.$extra : '';
+        $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id.$postfix;
+        $url = $url.'?'.http_build_query($filters);
+        $data = $this->apiClient->get($url, $this->createHeaders())->getBody();
+        return $data;
     }
 
     public function _createResource($namespace, $klass, $data) {
