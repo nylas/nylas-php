@@ -137,8 +137,8 @@ $client = new Nylas(CLIENT, SECRET, TOKEN);
 $namespace = $client->namespaces()->first();
 
 $file_path = '/var/my/folder/test_file.pdf';
-$upload_resp = $namespace->files()->create($file_path)->json();
-echo $upload_resp[0]['id'];
+$upload_resp = $namespace->files()->create($file_path);
+echo $upload_resp->id;
 ```
 
 ## Working with Drafts
