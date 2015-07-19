@@ -157,6 +157,40 @@ $send_message = $draft->send();
 echo $send_message->id;
 ```
 
+## Working with Events
+
+```php
+$client = new Nylas(CLIENT, SECRET, TOKEN);
+$namespace = $client->namespaces()->first();
+$calendars = $namespace->calendars()->all();
+
+$calendar = null;
+foeach($calendars as $i) {
+  if(!$i->read_only) {
+    $calendar = $i;
+  }
+}
+
+$person_obj = new \Nylas\Models\Person('Kartik Talwar', 'kartik@nylas.com');
+$calendar_obj = array("title" => "Important Meeting",
+                      "location" => "Nylas HQ",
+                      "participants" => array($person_obj),
+                      "calendar_id" => $calendar->id,
+                      "when" => array("start_time" => time(),
+                                      "end_time" => time() + (30*60)));
+// create event
+$event = $namespace->events()->create(calendar_obj);
+echo $event->id;
+
+// update
+$event = $event->update(array("location" => "Meeting room #1"));
+
+// delete event
+$event->delete();
+// delete event (alternate)
+$remove = $namespace->events()->find($event->id)->delete();
+```
+
 
 
 ## Open-Source Sync Engine
