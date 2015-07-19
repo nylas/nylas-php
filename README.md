@@ -179,7 +179,7 @@ $calendar_obj = array("title" => "Important Meeting",
                       "when" => array("start_time" => time(),
                                       "end_time" => time() + (30*60)));
 // create event
-$event = $namespace->events()->create(calendar_obj);
+$event = $namespace->events()->create($calendar_obj);
 echo $event->id;
 
 // update
