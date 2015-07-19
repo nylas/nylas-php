@@ -162,10 +162,8 @@ class Nylas {
         $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id;
 
         $payload = $this->createHeaders();
-        $payload['json'] = $data;
         $response = $this->apiClient->delete($url, $payload)->json();
         return $response;
-        return $klass->_createObject($this, $namespace, $response);
     }
 
     private function generateId() {

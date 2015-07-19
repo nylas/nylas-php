@@ -19,7 +19,7 @@ class Event extends NylasAPIObject {
         $this->namespace = $namespace;
     }
 
-    public function create($data, $api) {
+    public function create($data, $api=NULL) {
         $sanitized = array();
         foreach($this->attrs as $attr) {
             if(array_key_exists($attr, $data)) {
@@ -27,11 +27,24 @@ class Event extends NylasAPIObject {
             }
         }
 
-        $this->data = $sanitized;
-        $this->api = $api->api;
-        $this->namespace = $api->namespace;
+        if(!$api) {
+            $api = $this->api->klass;
+        } else {
+            $api = $api->api;
+        }
 
-        return $this->api->_createResource($this->namespace, $this, $data);
+        if(!array_key_exists('calendar_id', $sanitized)) {
+            if($this->api->collectionName == 'calendars') {
+                $sanitized['calendar_id'] = $this->api->id;
+            } else {
+                throw new Exception("Missing calendar_id", 1);
+            }
+        }
+
+        $this->data = $sanitized;
+        $this->api = $api;
+
+        return $this->api->_createResource($this->namespace, $this, $this->data);
     }
 
     public function update($data) {
@@ -47,7 +60,7 @@ class Event extends NylasAPIObject {
 
 
     public function delete() {
-        return $this->api->klass->_deleteResource($this->namespace, $this, $this->id);
+        return $this->klass->_deleteResource($this->namespace, $this, $this->id);
     }
 
 }
