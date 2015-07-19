@@ -157,6 +157,17 @@ class Nylas {
         }
     }
 
+    public function _deleteResource($namespace, $klass, $id) {
+        $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
+        $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id;
+
+        $payload = $this->createHeaders();
+        $payload['json'] = $data;
+        $response = $this->apiClient->delete($url, $payload)->json();
+        return $response;
+        return $klass->_createObject($this, $namespace, $response);
+    }
+
     private function generateId() {
         // Generates unique UUID
         return sprintf('%04x%04x-%04x-%04x-%04x-%04x%04x%04x',
