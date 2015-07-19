@@ -33,6 +33,11 @@ class Thread extends NylasAPIObject {
         return new NylasModelCollection($msgObj, $this->klass, $namespace, array("thread_id"=>$thread_id), 0, array());
     }
 
+    public function createReply() {
+        return $this->drafts()->create(array("subject" => $this->data['subject'],
+                                             "thread_id" => $this->data['id']));
+    }
+
     public function addTags($tags) {
         return $this->_updateTags($tags);
     }

@@ -32,6 +32,18 @@ class Draft extends NylasAPIObject {
         return $this;
     }
 
+    public function update($data) {
+        $allowed = array();
+        foreach($this->attrs as $attr) {
+            if(array_key_exists($attr, $data)) {
+                $sanitized[$attr] = $data[$attr];
+            }
+        }
+
+        $this->data = array_merge($this->data, $sanitized);
+        return $this;
+    }
+
     public function send($data=NULL) {
         $data = ($data) ? $data : $this->data;
         if(array_key_exists('id', $data)) {
