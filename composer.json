@@ -1,8 +1,14 @@
 {
-    "name": "nylas",
+    "name": "nylas/nylas",
     "description": "PHP wrapper for the Nylas API",
     "license": "MIT",
     "copyright": "Nylas 2015",
+    "authors" : [
+        {
+          "name": "Kartik Talwar",
+          "email": "kartik@kartikt.com"
+        }
+    ],
     "require": {
         "php": ">=5.4",
         "guzzlehttp/guzzle": "~4.0"
