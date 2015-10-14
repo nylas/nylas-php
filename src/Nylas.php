@@ -77,7 +77,7 @@ class Nylas {
     
     public function getDeltaCursor($token, $namespace) {
 
-        $url = $this->apiServer . '/n/' . $namespace->id . '/delta/latest_cursor';
+        $url = $this->apiServer . '/delta/latest_cursor';
         $headers = $this->createAuthHeader($token);
         $response = $this->apiClient->post($url, $headers)->json();
         if (array_key_exists('cursor', $response)) {
