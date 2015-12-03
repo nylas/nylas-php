@@ -14,7 +14,7 @@ class Draft extends NylasAPIObject {
                           'from', 'reply_to', 'thread_id',
                           'body', 'file_ids');
 
-    public function __construct($api, $namespace) {
+    public function __construct($api) {
         parent::__construct();
     }
 

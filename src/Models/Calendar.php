@@ -11,15 +11,14 @@ class Calendar extends NylasAPIObject {
 
     public $collectionName = 'calendars';
 
-    public function __construct($api, $namespace) {
+    public function __construct($api) {
         parent::__construct();
     }
 
     public function events() {
         $calendar_id = $this->data['id'];
-        $namespace = $this->data['namespace_id'];
-        $msgObj = new Event($this, $namespace);
-        return new NylasModelCollection($msgObj, $this->klass, $namespace, array("calendar_id"=>$calendar_id), 0, array());
+        $msgObj = new Event($this);
+        return new NylasModelCollection($msgObj, $this->klass, NULL, array("calendar_id"=>$calendar_id), 0, array());
     }
 
 

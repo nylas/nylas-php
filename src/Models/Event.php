@@ -13,10 +13,10 @@ class Event extends NylasAPIObject {
                           "participants", "calendar_id", "recurrence",
                           "status", "master_event_id", "original_start_time");
 
-    public function __construct($api, $namespace) {
+    public function __construct($api) {
         parent::__construct();
         $this->api = $api;
-        $this->namespace = $namespace;
+        $this->namespace = NULL;
     }
 
     public function create($data, $api=NULL) {
@@ -55,7 +55,7 @@ class Event extends NylasAPIObject {
             }
         }
 
-        return $this->api->klass->_updateResource($this->namespace, $this, $this->id, $sanitized);
+        return $this->api->_updateResource($this->namespace, $this, $this->id, $sanitized);
     }
 
 

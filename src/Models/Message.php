@@ -9,18 +9,22 @@ class Message extends NylasAPIObject {
 
     public $collectionName = 'messages';
 
-    public function __construct($api, $namespace) {
+    public function __construct($api) {
         parent::__construct();
         $this->api = $api;
-        $this->namespace = $namespace;
+        $this->namespace = NULL;
     }
 
     public function raw() {
-        $resource = $this->klass->getResourceRaw($this->namespace, $this, $this->data['id'], array('extra' => 'rfc2822'));
-        if(array_key_exists('rfc2822', $resource)) {
-            return base64_decode($resource['rfc2822']);
+        $headers = array('Accept' => 'message/rfc822');
+        $resource = $this->klass->getResourceData($this->namespace, $this, $this->data['id'], array('headers' => $headers));
+
+        $data = '';
+        while (!$resource->eof()) {
+            $data .= $resource->read(1024);
         }
-        return NULL;
+
+        return $data;
     }
 
 }

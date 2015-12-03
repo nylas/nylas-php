@@ -12,7 +12,7 @@ class Nylas {
     protected $apiServer = 'https://api.nylas.com';
     protected $apiClient;
     protected $apiToken;
-    public $apiRoot = 'n';
+    public $apiRoot = '';
 
     public function __construct($appID, $appSecret, $token=NULL, $apiServer=NULL) {
         $this->appID     = $appID;
@@ -95,12 +95,54 @@ class Nylas {
         return $response;
     }
 
-    public function namespaces() {
-        $nsObj = new Models\Namespaces($this, NULL);
-        return new NylasModelCollection($nsObj, $this, NULL);
+    public function account() {
+        $apiObj = new NylasAPIObject();
+        $nsObj = new Models\Account();
+        $accountData = $this->getResource('', $nsObj, '', array());
+        $account = $apiObj->_createObject($accountData->klass, NULL, $accountData->data);
+        return $account;
     }
 
-    // filter should be filters
+    public function threads() {
+        $msgObj = new Models\Thread($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function messages() {
+        $msgObj = new Models\Message($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function drafts() {
+        $msgObj = new Models\Draft($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function labels() {
+        $msgObj = new Models\Label($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function files() {
+        $msgObj = new Models\File($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function contacts() {
+        $msgObj = new Models\Contact($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function calendars() {
+        $msgObj = new Models\Calendar($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
+    public function events() {
+        $msgObj = new Models\Event($this);
+        return new NylasModelCollection($msgObj, $this, NULL, array(), 0, array());
+    }
+
     public function getResources($namespace, $klass, $filter) {
         $suffix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
         $url = $this->apiServer.$suffix.'/'.$klass->collectionName;
@@ -140,15 +182,22 @@ class Nylas {
 
     public function getResourceData($namespace, $klass, $id, $filters) {
         $extra = '';
+        $customHeaders = array();
         if(array_key_exists('extra', $filters)) {
             $extra = $filters['extra'];
             unset($filters['extra']);
+        }
+        if(array_key_exists('headers', $filters)) {
+            $customHeaders = $filters['headers'];
+            unset($filters['headers']);
         }
         $prefix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
         $postfix = ($extra) ? '/'.$extra : '';
         $url = $this->apiServer.$prefix.'/'.$klass->collectionName.'/'.$id.$postfix;
         $url = $url.'?'.http_build_query($filters);
-        $data = $this->apiClient->get($url, $this->createHeaders())->getBody();
+        $customHeaders = array_merge($this->createHeaders()['headers'], $customHeaders);
+        $headers = array('headers' => $customHeaders);
+        $data = $this->apiClient->get($url, $headers)->getBody();
         return $data;
     }
 
@@ -304,7 +353,6 @@ class NylasAPIObject {
     public $apiRoot;
 
     public function __construct() {
-        $this->apiRoot = 'n';
     }
 
     public function json() {
