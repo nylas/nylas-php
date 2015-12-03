@@ -5,9 +5,9 @@ namespace Nylas\Models;
 use Nylas\NylasAPIObject;
 
 
-class Contact extends NylasAPIObject {
+class Label extends NylasAPIObject {
 
-    public $collectionName = 'contacts';
+    public $collectionName = 'labels';
 
     public function __construct($api) {
         parent::__construct();
