@@ -75,7 +75,7 @@ class Nylas {
         return $this->apiToken;
     }
     
-    public function getDeltaCursor($token, $namespace) {
+    public function getDeltaCursor($token) {
 
         $url = $this->apiServer . '/delta/latest_cursor';
         $headers = $this->createAuthHeader($token);
@@ -87,7 +87,7 @@ class Nylas {
         return $this->cursor;
     }
 
-    public function getDeltas($cursor, $token, $namespace) {
+    public function getDeltas($cursor, $token) {
 
         $url = $this->apiServer . '/delta?cursor=' . $cursor;
         $headers = $this->createAuthHeader($token);
