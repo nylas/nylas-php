@@ -137,7 +137,7 @@ class Nylas {
         $filter['view'] = 'count';
 
         $data = $this->apiClient->get($url, $this->createHeaders() + ['query' => $filter])->json();
-        return $data['count'];
+        return (int) $data['count'];
     }
 
     public function getResource($namespace, $klass, $id, $filters) {
