@@ -2,6 +2,10 @@
 
 PHP bindings for the Nylas REST API [https://www.nylas.com](https://www.nylas.com)
 
+## **NOTE**: The Nylas PHP SDK is currently not actively maintained, and may need some TLC. However, our [Ruby](https://github.com/nylas/nylas-ruby), [Node](https://github.com/nylas/nylas-ruby) or [Python](https://github.com/nylas/nylas-python) SDKs are fully supported.
+
+Please feel free to use it and send us a pull request if you fix anything or add a feature, though. :)
+
 ## Installation
 
 You can install the library by running:
