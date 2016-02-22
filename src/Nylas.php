@@ -129,6 +129,17 @@ class Nylas {
         return $mapped;
     }
 
+    public function getResourcesCount($namespace, $klass, $filter)
+    {
+        $suffix = ($namespace) ? '/'.$klass->apiRoot.'/'.$namespace : '';
+        $url = $this->apiServer.$suffix.'/'.$klass->collectionName;
+
+        $filter['view'] = 'count';
+
+        $data = $this->apiClient->get($url, $this->createHeaders() + ['query' => $filter])->json();
+        return (int) $data['count'];
+    }
+
     public function getResource($namespace, $klass, $id, $filters) {
         $extra = '';
         if(array_key_exists('extra', $filters)) {
@@ -227,124 +238,7 @@ class Nylas {
             mt_rand(0, 0xffff),
             mt_rand(0, 0xffff)
         );
-}
-
-}
-
-
-class NylasModelCollection {
-
-    private $chunkSize = 50;
-
-    public function __construct($klass, $api, $namespace=NULL, $filter=array(), $offset=0, $filters=array()) {
-        $this->klass = $klass;
-        $this->api = $api;
-        $this->namespace = $namespace;
-        $this->filter = $filter;
-        $this->filters = $filters;
-
-        if(!array_key_exists('offset', $filter)) {
-            $this->filter['offset'] = 0;
-        }
-    }
-
-    public function items() {
-        $offset = 0;
-        while (True) {
-            $items = $this->_getModelCollection($offset, $this->chunkSize);
-            if(!$items) {
-                break;
-            }
-            foreach ($items as $item) {
-                yield $item;
-            }
-            if (count($items) < $this->chunkSize) {
-                break;
-            }
-            $offset += count($items);
-        }
-    }
-
-    public function first() {
-        $results = $this->_getModelCollection(0, 1);
-        if ($results) {
-            return $results[0];
-        }
-        return NULL;
-    }
-
-    public function all($limit=INF) {
-        return $this->_range($this->filter['offset'], $limit);
-    }
-
-    public function where($filter, $filters=array()) {
-        $this->filter = array_merge($this->filter, $filter);
-        $this->filter['offset'] = 0;
-        $collection = clone $this;
-        $collection->filter = $this->filter;
-        return $collection;
-    }
-
-    public function find($id) {
-        return $this->_getModel($id);
-    }
-
-    public function create($data) {
-        return $this->klass->create($data, $this);
-    }
-
-    private function _range($offset, $limit) {
-        $result = array();
-        while (count($result) < $limit) {
-            $to_fetch = min($limit - count($result), $this->chunkSize);
-            $data = $this->_getModelCollection($offset+count($result), $to_fetch);
-            $result = array_merge($result, $data);
-
-            if(!$data || count($data) < $to_fetch) {
-                break;
-            }
-        }
-        return $result;
-    }
-
-    private function _getModel($id) {
-        // make filter a kwarg filters
-        return $this->api->getResource($this->namespace, $this->klass, $id, $this->filter);
-    }
-
-    private function _getModelCollection($offset, $limit) {
-        $this->filter['offset'] = $offset;
-        $this->filter['limit'] = $limit;
-        return $this->api->getResources($this->namespace, $this->klass, $this->filter);
     }
 
 }
 
-
-class NylasAPIObject {
-
-    public $apiRoot;
-
-    public function __construct() {
-    }
-
-    public function json() {
-        return $this->data;
-    }
-
-    public function _createObject($klass, $namespace, $objects) {
-        $this->data = $objects;
-        $this->klass = $klass;
-        return $this;
-    }
-
-    public function __get($key) {
-        if(array_key_exists($key, $this->data)) {
-            return $this->data[$key];
-        }
-        return NULL;
-    }
-
-}
-
-?>
