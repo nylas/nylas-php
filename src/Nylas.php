@@ -260,7 +260,7 @@ class Nylas {
         return $response;
     }
 
-    public function getCalenders($cursor, $token) {
+    public function getCalendars($cursor, $token) {
         $url = $this->apiServer . '/calendars';
         $headers = $this->createAuthHeader($token);
         $response = $this->apiClient->get($url, $headers)->json();
