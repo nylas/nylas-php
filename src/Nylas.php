@@ -288,17 +288,17 @@ class Nylas {
         return $results;
     }
 
-    public function syncContacts($token) {
+    public function getContacts($token) {
         $this->setApiClientOptions();
         $headers = $this->createAuthHeader($token);
         $url = $this->apiServer . '/contacts';
         $request = $this->apiClient->get($url, $headers);
+
         $data = strstr($request, '{');
         $data = explode("\r\n",$data);
         $data = explode("\n",$data[0]);
 
         $results = array();
-
         foreach ($data as $datum) {
             if ((strpos($datum, '"email":') !== false) && (strpos($datum, 'reply@') === false)) {
 
