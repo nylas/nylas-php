@@ -308,6 +308,58 @@ class Nylas {
         return $results;
     }
 
+    public function handleCalendarEvent($token, $data, $methodType){
+        $uri = $this->apiServer . '/events';
+        if($methodType !== 'POST' && $methodType !== 'GET'){
+            $uri = $this->apiServer . '/events/'.$data['intevent_id'];
+        }
+
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: application/json",
+            'Authorization: Basic '. base64_encode($token . ':')
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $uri);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        if($methodType == 'POST'){
+            curl_setopt($ch, CURLOPT_POST, 1);
+        } else {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $methodType);
+        }
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+
+        $data = strstr($response, '{');
+        $data = explode("\r\n",$data);
+        $data = explode("\n",$data[0]);
+
+        $eventId = null;
+        foreach($data as $datum) {
+            if (strpos($datum, '"id":')) {
+                $eventId = $datum;
+                break;
+            }
+        }
+
+        $parseEventIdStr = explode(':', $eventId);
+        if(isset($parseEventIdStr[1])){
+            $parseEventIdStr = explode('"', $parseEventIdStr[1]);
+            $parseEventIdStr = $parseEventIdStr[1];
+        }
+        else {
+            $parseEventIdStr = $parseEventIdStr[0];
+        }
+        return $parseEventIdStr;
+    }
+
 }
 
 
