@@ -288,21 +288,86 @@ class Nylas {
         return $results;
     }
 
-    public function getContacts($token) {
+    public function getContacts($token, $blockedKeywords = array()) {
         $this->setApiClientOptions();
         $headers = $this->createAuthHeader($token);
         $url = $this->apiServer . '/contacts';
         $request = $this->apiClient->get($url, $headers);
 
-        $data = strstr($request, '{');
+        // Convert string response into JSON
+        $stream = strstr($request, '{');
+        $stream = explode("\r\n",$stream);
+        $stream = rtrim($stream[0], ',');
+        $stream = "[" . trim($stream) ;
+        $stream = json_decode($stream, true);
+
+        $results = array();
+        foreach ($stream as $value) {
+            $email = $value['email'];
+            $name = $value['name'];
+            // Filter emails
+            $current = array();
+            if (!empty($email)) {
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $splitEmail = explode('@', $email);
+                    for ($i = 0; $i <= count($blockedKeywords); $i++) {
+                        // Emails
+                        if (!empty($blockedKeywords[$i]) && !in_array($splitEmail[0], $blockedKeywords) &&
+                            !empty($splitEmail[1]) && !in_array($splitEmail[1], $blockedKeywords)
+                        ) {
+                            $current['email'] = $email;
+                            // Once authentic emails found then also add name for each one if exists
+                            if(!empty($name)){
+                                if (!empty($blockedKeywords[$i]) && !in_array($name, $blockedKeywords) &&
+                                    !empty($name) && !in_array($name, $blockedKeywords)
+                                ) {
+                                    $current['name'] = $name;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $results[] = $current;
+            // Remove empty indexes
+            $results = array_filter($results);
+        }
+        return $results;
+    }
+
+    public function getCalendarEvents($token, $data){
+        $uri = $this->apiServer . '/events';
+
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: application/json",
+            'Authorization: Basic '. base64_encode($token . ':')
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $uri);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+
+        $stream = Stream::factory($response);
+
+        $data = strstr($stream, '{');
         $data = explode("\r\n",$data);
         $data = explode("\n",$data[0]);
 
         $results = array();
-        foreach ($data as $datum) {
-            if ((strpos($datum, '"email":') !== false) && (strpos($datum, 'reply@') === false)) {
-
-                $results[] = $datum;
+        foreach($data as $datum) {
+            $decodedData = json_decode($datum, true);
+            if (!empty($decodedData)) {
+                $results[] = $decodedData;
             }
         }
         return $results;
