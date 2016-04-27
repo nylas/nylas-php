@@ -267,10 +267,17 @@ class Nylas {
         return $response;
     }
 
+    public function getRecurringEvents($after, $token) {
+        $url = $this->apiServer . '/events?expand_recurring=true&starts_after=' . $after;
+        $headers = $this->createAuthHeader($token);
+        $response = $this->apiClient->get($url, $headers)->json();
+        return $response;
+    }
+
     public function getDeltaStream($cursor, $token, $includeTypes='') {
         $this->setApiClientOptions();
         $headers = $this->createAuthHeader($token);
-        $url = $this->apiServer . '/delta/streaming?cursor=' . $cursor.$includeTypes;
+        $url = $this->apiServer . '/delta/streaming?cursor=' . $cursor . '&include_types=' . $includeTypes;
         $request = $this->apiClient->get($url, $headers);
         $stream = Stream::factory($request);
 
