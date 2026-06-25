@@ -1,208 +1,27 @@
-## Nylas PHP
+<div align="center">
+  <a href="https://www.nylas.com/">
+    <img width="100%" alt="Nylas" src="https://github.com/user-attachments/assets/137517ae-244d-47a5-8ca7-b12984971fc4" />
+  </a>
 
-PHP bindings for the Nylas REST API [https://www.nylas.com](https://www.nylas.com)
+  <h1>Nylas PHP SDK (legacy)</h1>
+</div>
 
-## **NOTE**: The Nylas PHP SDK is currently not actively maintained, and may need some TLC. However, our [Ruby](https://github.com/nylas/nylas-ruby), [Node](https://github.com/nylas/nylas-nodejs) or [Python](https://github.com/nylas/nylas-python) SDKs are fully supported.
+<br />
 
-Please feel free to use it and send us a pull request if you fix anything or add a feature, though. :)
+> ## ⚠️ This repository is archived and no longer maintained
+>
+> These PHP bindings were built for the Nylas v2 API and have not been actively maintained. This repository is preserved for historical reference and is no longer supported.
 
-## Installation
+## Use a maintained SDK instead
 
-You can install the library by running:
+For the current Nylas v3 API, use one of our officially supported SDKs:
 
-```php
-cd nylas-php
-composer install
-```
+- 🟢 [Node.js](https://github.com/nylas/nylas-nodejs)
+- 🐍 [Python](https://github.com/nylas/nylas-python)
+- 💎 [Ruby](https://github.com/nylas/nylas-ruby)
+- ☕ [Kotlin & Java](https://github.com/nylas/nylas-java)
 
+No SDK for your language? You can call the [Nylas v3 REST API](https://developer.nylas.com/docs/api/v3/) directly.
 
-## Usage
-
-The Nylas REST API uses server-side (three-legged) OAuth, and this library provides convenience methods to simplify the OAuth process. Here's how it works:
-
-1. You redirect the user to our login page, along with your App Id and Secret
-1. Your user logs in
-1. She is redirected to a callback URL of your own, along with an access code
-1. You use this access code to get an authorization token to the API
-
-For more information about authenticating with Nylas, visit the [Developer Documentation](https://www.nylas.com/docs/gettingstarted-hosted#authenticating).
-
-In practice, the Nylas REST API client simplifies this down to two steps.
-
-## Auth
-
-**index.php**
-
-```php
-$client = new Nylas(CLIENT, SECRET);
-$redirect_url = 'http://localhost:8080/login_callback.php';
-$get_auth_url = $client->createAuthURL($redirect_url);
-
-// redirect to Nylas auth server
-header("Location: ".$get_auth_url);
-```
-
-**login_callback.php**
-
-```php
-$access_code = $_GET['code'];
-$client = new Nylas(CLIENT, SECRET);
-$get_token = $client->getAuthToken($access_code);
-
-// save token in session
-$_SESSION['access_token'] = $get_token;
-```
-
-
-## Fetching Account Information
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN);
-$account = $client->account();
-
-echo $account->email_address;
-echo $account->provider;
-```
-
-
-
-## Fetching Threads
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN);
-
-// Fetch the first thread
-$first_thread = $client->threads()->first();
-echo $first_thread->id;
-
-// Fetch first 2 latest threads
-$two_threads = $client->threads()->all(2);
-foreach($two_threads as $thread) {
-    echo $thread->id;
-}
-
-// List all threads with 'ben@nylas.com'
-$search_criteria = array("any_email" => "ben@nylas.com");
-$get_threads = $client->threads()->where($search_criteria)->items()
-foreach($get_threads as $thread) {
-    echo $thread->id;
-}
-```
-
-## Working with Threads
-
-```php
-// List thread participants
-foreach($thead->participants as $participant) {
-    echo $participant->email;
-    echo $participant->name;
-}
-
-// Mark as Read
-$thread->markAsRead();
-
-// Mark as Seen
-$thread->markAsSeen();
-
-// Archive
-$thread->archive();
-
-// Unarchive
-$thread->unarchive();
-
-// Trash
-$thread->trash();
-
-// Star
-$thread->star();
-
-// Unstar
-$thread->unstar();
-
-// Add or remove arbitrary tags
-$to_add = array('cfa1233ef123acd12');
-$to_remove = array('inbox');
-$thread->addTags($to_add);
-$thread->removeTags($to_remove);
-
-// Listing messages
-foreach($thread->messages()->items() as $message) {
-    echo $message->subject;
-    echo $message->body;
-}
-```
-
-## Working with Files
-
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN);
-
-$file_path = '/var/my/folder/test_file.pdf';
-$upload_resp = $client->files()->create($file_path);
-echo $upload_resp->id;
-```
-
-## Working with Drafts
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN);
-
-$person_obj = new \Nylas\Models\Person('Kartik Talwar', 'kartik@nylas.com');
-$message_obj = array( "to" => array($person_obj),
-                      "subject" => "Hello, PHP!",
-                      "body" => "Test <br> message");
-
-$draft = $client->drafts()->create($message_obj);
-$send_message = $draft->send();
-echo $send_message->id;
-```
-
-## Working with Events
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN);
-$calendars = $client->calendars()->all();
-
-$calendar = null;
-foeach($calendars as $i) {
-  if(!$i->read_only) {
-    $calendar = $i;
-  }
-}
-
-$person_obj = new \Nylas\Models\Person('Kartik Talwar', 'kartik@nylas.com');
-$calendar_obj = array("title" => "Important Meeting",
-                      "location" => "Nylas HQ",
-                      "participants" => array($person_obj),
-                      "calendar_id" => $calendar->id,
-                      "when" => array("start_time" => time(),
-                                      "end_time" => time() + (30*60)));
-// create event
-$event = $client->events()->create($calendar_obj);
-echo $event->id;
-
-// update
-$event = $event->update(array("location" => "Meeting room #1"));
-
-// delete event
-$event->delete();
-// delete event (alternate)
-$remove = $client->events()->find($event->id)->delete();
-```
-
-
-
-## Open-Source Sync Engine
-
-The [Nylas Sync Engine](http://github.com/nylas/sync-engine) is open-source, and you can also use the PHP library with the open-source API. Since the open-source API provides no authentication or security, connecting to it is simple. When you instantiate the Nylas object, provide null for the App ID, App Secret, and API Token, and pass the fully-qualified address of your copy of the sync engine:
-
-```php
-$client = new Nylas(CLIENT, SECRET, TOKEN, 'http://localhost:5555/');
-```
-
-## Contributing
-
-We'd love your help making Nylas better. Join the Google Group for project updates and feature discussion. We also hang out in `#nylas` on [irc.freenode.net](irc.freenode.net), or you can email [support@nylas.com](mailto:support@nylas.com).
-
-Please sign the Contributor License Agreement before submitting pull requests. (It's similar to other projects, like NodeJS or Meteor.)
+- 📖 [Developer documentation](https://developer.nylas.com/)
+- 🚀 [Sign up for free](https://dashboard-v3.nylas.com/register)
