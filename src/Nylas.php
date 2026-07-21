@@ -2,10 +2,10 @@
 
 namespace Nylas;
 
-
 use Nylas\Models;
 use GuzzleHttp\Client as GuzzleClient;
-
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Stream\Stream;
 
 class Nylas {
 
@@ -28,7 +28,7 @@ class Nylas {
     protected function createHeaders() {
         $token = 'Basic '.base64_encode($this->apiToken.':');
         $headers = array('headers' => ['Authorization' => $token,
-                                       'X-Nylas-API-Wrapper' => 'php']);
+            'X-Nylas-API-Wrapper' => 'php']);
         return $headers;
     }
 
@@ -38,20 +38,20 @@ class Nylas {
 
     public function createAuthURL($redirect_uri, $login_hint=NULL) {
         $args = array("client_id" => $this->appID,
-                      "redirect_uri" => $redirect_uri,
-                      "response_type" => "code",
-                      "scope" => "email",
-                      "login_hint" => $login_hint,
-                      "state" => $this->generateId());
+            "redirect_uri" => $redirect_uri,
+            "response_type" => "code",
+            "scope" => "email",
+            "login_hint" => $login_hint,
+            "state" => $this->generateId());
 
         return $this->apiServer.'/oauth/authorize?'.http_build_query($args);
     }
 
     public function getAuthToken($code) {
         $args = array("client_id" => $this->appID,
-                      "client_secret" => $this->appSecret,
-                      "grant_type" => "authorization_code",
-                      "code" => $code);
+            "client_secret" => $this->appSecret,
+            "grant_type" => "authorization_code",
+            "code" => $code);
 
         $url = $this->apiServer.'/oauth/token';
         $payload = array();
@@ -227,7 +227,203 @@ class Nylas {
             mt_rand(0, 0xffff),
             mt_rand(0, 0xffff)
         );
-}
+    }
+
+    private function setApiClientOptions() {
+        $this->apiClient->setDefaultOption('config/curl/'.CURLOPT_TIMEOUT, 0);
+        $this->apiClient->setDefaultOption('config/curl/'.CURLOPT_TIMEOUT_MS, 0);
+        $this->apiClient->setDefaultOption('config/curl/'.CURLOPT_CONNECTTIMEOUT, 0);
+        $this->apiClient->setDefaultOption('config/curl/'.CURLOPT_RETURNTRANSFER, true);
+    }
+
+    private function createAuthHeader($token) {
+        $Authtoken = 'Basic ' . base64_encode($token . ':');
+        $headers = array('headers' => ['Authorization' => $Authtoken,
+            'X-Nylas-API-Wrapper' => 'php']);
+        return $headers;
+    }
+
+    public function getDeltaCursor($token) {
+        $url = $this->apiServer . '/delta/latest_cursor';
+        $headers = $this->createAuthHeader($token);
+        $response = $this->apiClient->post($url, $headers)->json();
+        if (array_key_exists('cursor', $response)) {
+            $this->cursor = $response['cursor'];
+        }
+        return $this->cursor;
+    }
+
+    public function getDeltas($cursor, $token) {
+        $url = $this->apiServer . '/delta?cursor=' . $cursor;
+        $headers = $this->createAuthHeader($token);
+        $response = $this->apiClient->get($url, $headers)->json();
+        return $response;
+    }
+
+    public function getCalendars($cursor, $token) {
+        $url = $this->apiServer . '/calendars';
+        $headers = $this->createAuthHeader($token);
+        $response = $this->apiClient->get($url, $headers)->json();
+        return $response;
+    }
+
+    public function getDeltaStream($cursor, $token, $includeTypes='') {
+        $this->setApiClientOptions();
+        $headers = $this->createAuthHeader($token);
+        $url = $this->apiServer . '/delta/streaming?cursor=' . $cursor.$includeTypes;
+        $request = $this->apiClient->get($url, $headers);
+        $stream = Stream::factory($request);
+
+        $data = strstr($stream, '{');
+        $data = explode("\r\n",$data);
+        $data = explode("\n",$data[0]);
+
+        $results = array();
+        foreach($data as $datum) {
+            $decodedData = json_decode($datum, true);
+            if (!empty($decodedData)) {
+                $results[] = $decodedData;
+            }
+        }
+        return $results;
+    }
+
+    public function getContacts($token, $blockedKeywords = array()) {
+        $this->setApiClientOptions();
+        $headers = $this->createAuthHeader($token);
+        $url = $this->apiServer . '/contacts';
+        $request = $this->apiClient->get($url, $headers);
+
+        // Convert string response into JSON
+        $stream = strstr($request, '{');
+        $stream = explode("\r\n",$stream);
+        $stream = rtrim($stream[0], ',');
+        $stream = "[" . trim($stream) ;
+        $stream = json_decode($stream, true);
+
+        $results = array();
+        foreach ($stream as $value) {
+            $email = $value['email'];
+            $name = $value['name'];
+            // Filter emails
+            $current = array();
+            if (!empty($email)) {
+                if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                    $splitEmail = explode('@', $email);
+                    for ($i = 0; $i <= count($blockedKeywords); $i++) {
+                        // Emails
+                        if (!empty($blockedKeywords[$i]) && !in_array($splitEmail[0], $blockedKeywords) &&
+                            !empty($splitEmail[1]) && !in_array($splitEmail[1], $blockedKeywords)
+                        ) {
+                            $current['email'] = $email;
+                            // Once authentic emails found then also add name for each one if exists
+                            if(!empty($name)){
+                                if (!empty($blockedKeywords[$i]) && !in_array($name, $blockedKeywords) &&
+                                    !empty($name) && !in_array($name, $blockedKeywords)
+                                ) {
+                                    $current['name'] = $name;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $results[] = $current;
+            // Remove empty indexes
+            $results = array_filter($results);
+        }
+        return $results;
+    }
+
+    public function getCalendarEvents($token, $data){
+        $uri = $this->apiServer . '/events';
+
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: application/json",
+            'Authorization: Basic '. base64_encode($token . ':')
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $uri);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+
+        $stream = Stream::factory($response);
+
+        $data = strstr($stream, '{');
+        $data = explode("\r\n",$data);
+        $data = explode("\n",$data[0]);
+
+        $results = array();
+        foreach($data as $datum) {
+            $decodedData = json_decode($datum, true);
+            if (!empty($decodedData)) {
+                $results[] = $decodedData;
+            }
+        }
+        return $results;
+    }
+
+    public function handleCalendarEvent($token, $data, $methodType){
+        $uri = $this->apiServer . '/events';
+        if($methodType !== 'POST' && $methodType !== 'GET'){
+            $uri = $this->apiServer . '/events/'.$data['intevent_id'];
+        }
+
+        $headers = array(
+            "Content-type: application/json",
+            "Accept: application/json",
+            'Authorization: Basic '. base64_encode($token . ':')
+        );
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $uri);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 0);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, 0);
+        curl_setopt($ch, CURLOPT_VERBOSE, 1);
+        curl_setopt($ch, CURLOPT_HEADER, 1);
+        if($methodType == 'POST'){
+            curl_setopt($ch, CURLOPT_POST, 1);
+        } else {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $methodType);
+        }
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+        $response = curl_exec($ch);
+
+        $data = strstr($response, '{');
+        $data = explode("\r\n",$data);
+        $data = explode("\n",$data[0]);
+
+        $eventId = null;
+        foreach($data as $datum) {
+            if (strpos($datum, '"id":')) {
+                $eventId = $datum;
+                break;
+            }
+        }
+
+        $parseEventIdStr = explode(':', $eventId);
+        if(isset($parseEventIdStr[1])){
+            $parseEventIdStr = explode('"', $parseEventIdStr[1]);
+            $parseEventIdStr = $parseEventIdStr[1];
+        }
+        else {
+            $parseEventIdStr = $parseEventIdStr[0];
+        }
+        return $parseEventIdStr;
+    }
 
 }
 
@@ -346,5 +542,3 @@ class NylasAPIObject {
     }
 
 }
-
-?>
